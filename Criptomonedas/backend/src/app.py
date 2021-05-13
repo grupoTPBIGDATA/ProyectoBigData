@@ -12,17 +12,18 @@ mongo = PyMongo(app)
 def create_cripto():
    #Recive data
    criptomonedas = cg.get_coins_list()
-   mongo.db.Listacriptomonedas.insert(criptomonedas)       
+   mongo.db.criptomonedas.insert(criptomonedas)       
    #print(request.json)
    return {'message':'received'}
 
 @app.route('/criptomonedas',methods=['GET'])
 def get_Criptomonedas():
-   criptomonedas = cg.get_coins_list()
-   print(len(criptomonedas))
-   response = json_util.dumps(criptomonedas)
+   #criptomonedas = cg.get_coins_list()
+   #print(len(criptomonedas))
    #for i in range(len(criptomonedas)):
    #    print(criptomonedas[i])
+   listaCriptomonedas = mongo.db.criptomonedas.find()
+   response = json_util.dumps(listaCriptomonedas)
    return Response(response, mimetype='aplication/json')
 
 @app.route('/criptomonedas/<id>',methods=['GET'])
