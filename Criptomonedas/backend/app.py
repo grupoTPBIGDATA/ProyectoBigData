@@ -4,6 +4,8 @@ from pycoingecko import CoinGeckoAPI
 from bson import json_util
 from datetime import datetime, timedelta
 
+from models import Precio
+
 cg = CoinGeckoAPI()
 app = Flask(__name__)
 app.config['MONGO_URI'] = 'mongodb://localhost/proyectoBigData'
@@ -54,12 +56,12 @@ def create_history(id_moneda):
 
     historial = cg.get_coin_market_chart_by_id(id=id_moneda, vs_currency='usd', days=days_ago, interval=time_interval)
 
-    mongo.db.criptoHistory.insert(
-        {'id': id_moneda,
-         'date_since': date_since,
-         'date_until': datetime.today(),
-         'interval': time_interval,
-         'history': historial})
+    precios = historial['prices']
+
+    # prices collection: price, datetime, coin
+    lista_precios = [Precio(id_moneda, x[1], x[0]).__dict__ for x in precios]
+
+    mongo.db.priceHistory.insert(lista_precios)
 
     return {'message': 'history retrieved'}
 
