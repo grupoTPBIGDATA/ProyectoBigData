@@ -2,6 +2,7 @@ from flask import Flask, request, Response
 from flask_pymongo import PyMongo
 from pycoingecko import CoinGeckoAPI
 from bson import json_util
+from datetime import datetime, timedelta
 
 cg = CoinGeckoAPI()
 app = Flask(__name__)
@@ -16,7 +17,7 @@ def hello_world():
 
 @app.route('/criptomonedas', methods=['POST'])
 def create_cripto():
-    # Recive data
+    # Receive data
     criptomonedas = cg.get_coins_list()
     mongo.db.criptomonedas.insert(criptomonedas)
     # print(request.json)
@@ -38,6 +39,29 @@ def get_criptomonedas():
 def get_criptomoneda(id_moneda):
     print(id_moneda)
     return {'message': 'received'}
+
+
+@app.route('/historial/<id_moneda>', methods=['POST'])
+def create_history(id_moneda):
+    days_ago = request.args['days']
+
+    time_interval = request.args['interval']
+
+    if days_ago == 'max':
+        date_since = days_ago
+    else:
+        date_since = datetime.today() - timedelta(days=float(days_ago))
+
+    historial = cg.get_coin_market_chart_by_id(id=id_moneda, vs_currency='usd', days=days_ago, interval=time_interval)
+
+    mongo.db.criptoHistory.insert(
+        {'id': id_moneda,
+         'date_since': date_since,
+         'date_until': datetime.today(),
+         'interval': time_interval,
+         'history': historial})
+
+    return {'message': 'history retrieved'}
 
 
 if __name__ == "__main__":
