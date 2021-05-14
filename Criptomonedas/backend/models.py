@@ -6,4 +6,4 @@ from datetime import datetime
 class Precio:
     id_criptomoneda: str
     precio: float
-    fecha: int
+    fecha: datetime
