@@ -59,7 +59,7 @@ def create_history(id_moneda):
     precios = historial['prices']
 
     # prices collection: price, datetime, coin
-    lista_precios = [Precio(id_moneda, x[1], datetime.fromtimestamp(x[0]/1000, timezone.utc)).__dict__ for x in precios]
+    lista_precios = [vars(Precio(id_moneda, x[1], datetime.fromtimestamp(x[0]/1000, timezone.utc))) for x in precios]
 
     mongo.db.priceHistory.insert(lista_precios)
 
