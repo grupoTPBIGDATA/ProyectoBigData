@@ -2,7 +2,7 @@ from flask import Flask, request, Response
 from flask_pymongo import PyMongo
 from pycoingecko import CoinGeckoAPI
 from bson import json_util
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from models import Precio
 
@@ -59,7 +59,7 @@ def create_history(id_moneda):
     precios = historial['prices']
 
     # prices collection: price, datetime, coin
-    lista_precios = [Precio(id_moneda, x[1], x[0]).__dict__ for x in precios]
+    lista_precios = [vars(Precio(id_moneda, x[1], datetime.fromtimestamp(x[0]/1000, timezone.utc))) for x in precios]
 
     mongo.db.priceHistory.insert(lista_precios)
 
