@@ -21,8 +21,8 @@ auth.set_access_token(access_token, access_token_secret)
 apiTwitter = tweepy.API(auth, wait_on_rate_limit = True, wait_on_rate_limit_notify = True)
 
 # Para ver si me trae lo de Elon Musk
-#data = apiTwitter.get_user("elonmusk")
-#print (json.dumps(data._json,indent=2))
+data = apiTwitter.get_user("CryptoWhale")
+print (json.dumps(data._json,indent=2))
 
 #Obtener los tweets
 #for tweet in tweepy.Cursor(apiTwitter.user_timeline,screen_name = "elonmusk", tweet_mode = "extended").items(1):
@@ -40,21 +40,22 @@ def getTweetsCripto():
         #json.dumps(tweet._json,indent=2)
         #print (tweet._json['created_at'] + ' ' + str(tweet._json['user']['screen_name']))
     for tweet in tweepy.Cursor(apiTwitter.search,q = query, until = date(int(year),int(month),int(day)).isoformat() ,tweet_mode = "extended").items(int(quantity)):
-        tweets = {
-            'created_at': tweet._json['created_at'],
-            'user_name': str(tweet._json['user']['screen_name']),
-            'profile_name': str(tweet._json['user']['name']),
-            'profile_description':str(tweet._json['user']['description']) ,
-            'full_text': tweet._json['full_text'],
-            'hastag': tweet._json['entities']['hashtags'],
-            'keyword' : query
-        }
-        lista.append(tweets)
+        if str(tweet._json['user']['screen_name']) == 'CryptoWhale': 
+            tweets = {
+                'created_at': tweet._json['created_at'],
+                'user_name': str(tweet._json['user']['screen_name']),
+                'profile_name': str(tweet._json['user']['name']),
+                'profile_description':str(tweet._json['user']['description']) ,
+                'full_text': tweet._json['full_text'],
+                'hastag': tweet._json['entities']['hashtags'],
+                'keyword' : query
+                }
+            lista.append(tweets)
         #print(json.dumps(tweet._json,indent=2))
         #print(tweet._json['entities']['hashtags'])
-    response = json_util.dumps(lista)
-    mongo.db.tweetsCripto.insert(lista)
-    return Response(response,mimetype='aplication/json')
+            response = json_util.dumps(lista)
+            mongo.db.tweetsCripto.insert(lista)
+            return Response(response,mimetype='aplication/json')
 
 @app.route('/')
 def hello_world():
