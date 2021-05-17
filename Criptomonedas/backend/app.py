@@ -22,7 +22,7 @@ apiTwitter = tweepy.API(auth, wait_on_rate_limit = True, wait_on_rate_limit_noti
 
 # Para ver si me trae lo de Elon Musk
 data = apiTwitter.get_user("CryptoWhale")
-print (json.dumps(data._json,indent=2))
+#print (json.dumps(data._json,indent=2))
 
 #Obtener los tweets
 #for tweet in tweepy.Cursor(apiTwitter.user_timeline,screen_name = "elonmusk", tweet_mode = "extended").items(1):
@@ -51,11 +51,17 @@ def getTweetsCripto():
                 'keyword' : query
                 }
             lista.append(tweets)
-        #print(json.dumps(tweet._json,indent=2))
-        #print(tweet._json['entities']['hashtags'])
             response = json_util.dumps(lista)
             mongo.db.tweetsCripto.insert(lista)
             return Response(response,mimetype='aplication/json')
+
+@app.route('/tweetsTest/<userId>',methods=['GET'])
+def test(userId):
+    lista = []
+    for tweet in apiTwitter.user_timeline(screen_name = userId, count = 200, include_rts = False, tweet_mode = "extended"):
+        lista.append(json.dumps(tweet._json,indent=2))
+    response = lista
+    return Response(response,mimetype='aplication/json')
 
 @app.route('/')
 def hello_world():
