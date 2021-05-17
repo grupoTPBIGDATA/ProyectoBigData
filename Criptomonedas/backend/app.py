@@ -63,8 +63,8 @@ def get_tweets_crypto():
 @app.route('/tweets/<user_id>', methods=['GET'])
 def get_user_tweets(user_id):
     ciclos = request.args['ciclos']
+
     lista = []
-    min_id_last_fetch = 0
 
     for i in range(int(ciclos)):
 
@@ -85,8 +85,7 @@ def get_user_tweets(user_id):
             }
             lista.append(tweet_formatted)
 
-            if min_id_last_fetch == 0 or tweet.id < min_id_last_fetch:
-                min_id_last_fetch = tweet.id
+    mongo.db.tweetsCripto.insert(lista)
 
     return Response(json_util.dumps(lista), mimetype='aplication/json')
 
