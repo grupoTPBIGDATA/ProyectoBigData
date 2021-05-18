@@ -115,9 +115,9 @@ def get_criptomonedas():
 
 
 @app.route('/criptomonedas/<id_moneda>', methods=['GET'])
-def get_criptomoneda(id_moneda):
-    print(id_moneda)
-    return {'message': 'received'}
+def get_criptomonedaPrice(id_moneda):
+    criptomoneda = cg.get_price(ids =id_moneda,vs_currencies='usd',include_market_cap=True, include_24hr_vol=True, include_24hr_change=True, include_last_updated_at=True)
+    return criptomoneda
 
 
 @app.route('/historial/<id_moneda>', methods=['POST'])
