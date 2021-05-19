@@ -1,9 +1,10 @@
 from datetime import date, datetime, timezone
 
 import tweepy
+import json
 from bson import json_util
-from flask import Flask, request, Response
-from flask_pymongo import PyMongo
+from flask import Flask, request, Response, jsonify
+from flask_pymongo import PyMongo, ObjectId
 from pycoingecko import CoinGeckoAPI
 
 from connectionChain import (cosumer_key, consumer_secret, access_token, access_token_secret)
@@ -105,10 +106,6 @@ def create_cripto():
 
 @app.route('/criptomonedas', methods=['GET'])
 def get_criptomonedas():
-    # criptomonedas = cg.get_coins_list()
-    # print(len(criptomonedas))
-    # for i in range(len(criptomonedas)):
-    #    print(criptomonedas[i])
     lista_criptomonedas = mongo.db.criptomonedas.find()
     response = json_util.dumps(lista_criptomonedas)
     return Response(response, mimetype='aplication/json')
@@ -136,6 +133,23 @@ def create_history(id_moneda):
     mongo.db.priceHistory.insert(lista_precios)
 
     return {'message': 'history retrieved'}
+
+
+@app.route('/historial/<id_moneda>', methods=['GET'])
+def get_history(id_moneda):
+    # prices collection: price, datetime, coin
+    lista_precio_criptomonedas = []
+    for precio_criptomonedas in mongo.db.priceHistory.find({'id_criptomoneda': id_moneda}):
+        lista_precio_criptomonedas.append({
+            '_id': str(ObjectId(precio_criptomonedas['_id'])),
+            'id_criptomoneda': precio_criptomonedas['id_criptomoneda'],
+            'precio':precio_criptomonedas['precio'],
+            'fecha':datetime.strftime(precio_criptomonedas['fecha'],'%Y-%m-%dT%H:%M:%S.%f%z')
+            #datetime.strptime(datetime.strftime(precio_criptomonedas['fecha'],'%Y-%m-%dT%H:%M:%S.%f%z'),'%Y-%m-%dT%H:%M:%S.%f')
+        })
+    response = json_util.dumps(lista_precio_criptomonedas)
+    return Response(response, mimetype='aplication/json')
+    #return jsonify(lista_precio_criptomonedas)
 
 
 if __name__ == "__main__":
