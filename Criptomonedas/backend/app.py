@@ -24,13 +24,6 @@ apiTwitter = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify
 # Para ver si me trae lo de Elon Musk
 data = apiTwitter.get_user("CryptoWhale")
 
-
-# print (json.dumps(data._json,indent=2))
-
-# Obtener los tweets
-# for tweet in tweepy.Cursor(apiTwitter.user_timeline,screen_name = "elonmusk", tweet_mode = "extended").items(1):
-#    print (json.dumps(tweet._json,indent=2))
-
 @app.route('/tweets', methods=['GET'])
 def get_tweets_crypto():
     lista = []
@@ -39,12 +32,8 @@ def get_tweets_crypto():
     year = request.args['year']
     month = request.args['month']
     day = request.args['day']
-    # for tweet in tweepy.Cursor(apiTwitter.search,q = query, tweet_mode = "extended").items(10):
-    # json.dumps(tweet._json,indent=2)
-    # print (tweet._json['created_at'] + ' ' + str(tweet._json['user']['screen_name']))
     for tweet in tweepy.Cursor(apiTwitter.search, q=query, until=date(int(year), int(month), int(day)).isoformat(),
                                tweet_mode="extended").items(int(quantity)):
-        if tweet.user.screen_name == 'CryptoWhale':
             tweets = {
                 'created_at': tweet.created_at,
                 'user_name': tweet.user.screen_name,
@@ -95,7 +84,6 @@ def get_user_tweets(user_id):
 def hello_world():
     return 'Hello World!'
 
-
 @app.route('/criptomonedas', methods=['POST'])
 def create_cripto():
     # Receive data
@@ -103,13 +91,11 @@ def create_cripto():
     mongo.db.criptomonedas.insert(criptomonedas)
     return {'message': 'received'}
 
-
 @app.route('/criptomonedas', methods=['GET'])
 def get_criptomonedas():
     lista_criptomonedas = mongo.db.criptomonedas.find()
     response = json_util.dumps(lista_criptomonedas)
     return Response(response, mimetype='aplication/json')
-
 
 @app.route('/criptomonedas/<id_moneda>', methods=['GET'])
 def get_criptomonedaPrice(id_moneda):
@@ -145,12 +131,24 @@ def get_history(id_moneda):
             'id_criptomoneda': precio_criptomonedas['id_criptomoneda'],
             'precio':precio_criptomonedas['precio'],
             'fecha':datetime.strftime(precio_criptomonedas['fecha'],'%Y-%m-%dT%H:%M:%S.%f%z')
-            #datetime.strptime(datetime.strftime(precio_criptomonedas['fecha'],'%Y-%m-%dT%H:%M:%S.%f%z'),'%Y-%m-%dT%H:%M:%S.%f')
         })
     response = json_util.dumps(lista_precio_criptomonedas)
     return Response(response, mimetype='aplication/json')
-    #return jsonify(lista_precio_criptomonedas)
 
+
+@app.route('/historial/<id_moneda>', methods=['PUT'])
+def update_history(id_moneda):
+    
+    days_ago = request.args['days']
+    time_interval = request.args['interval']
+    mongo.db.priceHistory.delete_many({'id_criptomoneda': id_moneda})
+    historial = cg.get_coin_market_chart_by_id(id=id_moneda, vs_currency='usd', days=days_ago, interval=time_interval)
+    precios = historial['prices']
+    
+    # prices collection: price, datetime, coin
+    lista_precios = [vars(Precio(id_moneda, x[1], datetime.fromtimestamp(x[0] / 1000, timezone.utc))) for x in precios]
+    mongo.db.priceHistory.insert(lista_precios)
+    return {'message': 'history updated'}
 
 if __name__ == "__main__":
     app.run(debug=True)
