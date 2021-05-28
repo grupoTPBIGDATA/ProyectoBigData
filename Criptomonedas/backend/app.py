@@ -1,10 +1,12 @@
 from datetime import date, datetime, timezone
 
 import tweepy
+
 from bson import json_util
 from flask import Flask, request, Response
 from flask_pymongo import PyMongo, ObjectId
 from pycoingecko import CoinGeckoAPI
+from pytwitterscraper import TwitterScraper
 
 from connectionChain import (cosumer_key, consumer_secret, access_token, access_token_secret)
 from models import Precio
@@ -14,6 +16,7 @@ app = Flask(__name__)
 app.config['MONGO_URI'] = 'mongodb://localhost/proyectoBigData'
 mongo = PyMongo(app)
 
+
 # Cadenas de conexion 
 auth = tweepy.OAuthHandler(cosumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
@@ -22,6 +25,24 @@ apiTwitter = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify
 
 # Para ver si me trae lo de Elon Musk
 data = apiTwitter.get_user("CryptoWhale")
+
+tw = TwitterScraper()
+#profile = tw.get_profile(name="elonmusk")
+#print(profile.__dict__)
+#search = tw.searchkeywords("dogecoin")
+#print(search.__dict__)
+
+
+data = tw.get_profile(names=["Dogecoin"])
+for data_mem in data :
+    print(data_mem.id)
+
+tweets = tw.get_tweets(2235729541, count=9000)
+print(tweets.contents)
+
+
+
+
 
 
 @app.route('/tweets', methods=['GET'])
