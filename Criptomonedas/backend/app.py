@@ -31,14 +31,20 @@ tw = TwitterScraper()
 #print(profile.__dict__)
 #search = tw.searchkeywords("dogecoin")
 #print(search.__dict__)
+#user = search.__dict__
+#print(user['users'])
+#for u in user['users']:
+#    print(u['name'])
+#for s in search.__dict__:
+#    print(str(s['name']))
 
 
-data = tw.get_profile(names=["Dogecoin"])
-for data_mem in data :
-    print(data_mem.id)
+#data = tw.get_profile(names=["Dogecoin"])
+#for data_mem in data :
+#    print(data_mem.id)
 
-tweets = tw.get_tweets(2235729541, count=9000)
-print(tweets.contents)
+#tweets = tw.get_tweets(2235729541, count=9000)
+#print(tweets.contents)
 
 
 
@@ -70,6 +76,26 @@ def get_tweets_crypto():
     response = json_util.dumps(lista)
     return Response(response, mimetype='aplication/json')
 
+
+@app.route('/tweets/profiles', methods=['GET'])
+def get_tweets_profiles():
+    keyword = request.args['keyword']
+    search = tw.searchkeywords(keyword)
+    user = vars(search)
+    lista = []
+    for u in user['users']:
+        print(u['screen_name'])
+        data = tw.get_profile(names=[u['screen_name']])
+        for data_mem in data :
+            print(data_mem.id)
+            tweets = tw.get_tweets(int(data_mem.id), count=9000)
+            tweet = {
+                'user': u['screen_name'],
+                'tweet': tweets.contents
+            }
+            lista.append(tweet)
+    response = json_util.dumps(lista)
+    return Response(response, mimetype='aplication/json')
 
 @app.route('/tweets/<user_id>', methods=['GET'])
 def get_user_tweets(user_id):
