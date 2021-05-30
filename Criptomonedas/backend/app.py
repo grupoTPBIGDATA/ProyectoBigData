@@ -1,6 +1,7 @@
 from datetime import date, datetime, timezone
 
 import tweepy
+import twint
 
 from bson import json_util
 from flask import Flask, request, Response
@@ -16,8 +17,7 @@ app = Flask(__name__)
 app.config['MONGO_URI'] = 'mongodb://localhost/proyectoBigData'
 mongo = PyMongo(app)
 
-
-# Cadenas de conexion 
+# Cadenas de conexion
 auth = tweepy.OAuthHandler(cosumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
 
@@ -27,28 +27,26 @@ apiTwitter = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify
 data = apiTwitter.get_user("CryptoWhale")
 
 tw = TwitterScraper()
-#profile = tw.get_profile(name="elonmusk")
-#print(profile.__dict__)
-#search = tw.searchkeywords("dogecoin")
-#print(search.__dict__)
-#user = search.__dict__
-#print(user['users'])
-#for u in user['users']:
+
+
+# profile = tw.get_profile(name="elonmusk")
+# print(profile.__dict__)
+# search = tw.searchkeywords("dogecoin")
+# print(search.__dict__)
+# user = search.__dict__
+# print(user['users'])
+# for u in user['users']:
 #    print(u['name'])
-#for s in search.__dict__:
+# for s in search.__dict__:
 #    print(str(s['name']))
 
 
-#data = tw.get_profile(names=["Dogecoin"])
-#for data_mem in data :
+# data = tw.get_profile(names=["Dogecoin"])
+# for data_mem in data :
 #    print(data_mem.id)
 
-#tweets = tw.get_tweets(2235729541, count=9000)
-#print(tweets.contents)
-
-
-
-
+# tweets = tw.get_tweets(2235729541, count=9000)
+# print(tweets.contents)
 
 
 @app.route('/tweets', methods=['GET'])
@@ -86,7 +84,7 @@ def get_tweets_profiles():
     for u in user['users']:
         print(u['screen_name'])
         data = tw.get_profile(names=[u['screen_name']])
-        for data_mem in data :
+        for data_mem in data:
             print(data_mem.id)
             tweets = tw.get_tweets(int(data_mem.id), count=9000)
             tweet = {
@@ -96,6 +94,7 @@ def get_tweets_profiles():
             lista.append(tweet)
     response = json_util.dumps(lista)
     return Response(response, mimetype='aplication/json')
+
 
 @app.route('/tweets/<user_id>', methods=['GET'])
 def get_user_tweets(user_id):
@@ -208,6 +207,20 @@ def update_history(id_moneda):
     lista_precios = [vars(Precio(id_moneda, x[1], datetime.fromtimestamp(x[0] / 1000, timezone.utc))) for x in precios]
     mongo.db.priceHistory.insert(lista_precios)
     return {'message': 'history updated'}
+
+
+@app.route('/search/<keyword>', methods=['GET'])
+def search_keyword(keyword):
+    config = twint.Config()
+    config.Search = keyword
+    config.Retweets = False
+    config.Min_likes = 5000
+
+    config.Store_json = True
+    config.Output = keyword + ".json"
+    result = twint.run.Search(config)
+
+    return {'message': 'OK'}
 
 
 if __name__ == "__main__":
