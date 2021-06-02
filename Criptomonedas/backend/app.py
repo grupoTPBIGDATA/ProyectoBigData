@@ -2,6 +2,8 @@ from datetime import date, datetime, timezone
 
 import tweepy
 import twint
+import json
+import pandas as pd
 
 from bson import json_util
 from flask import Flask, request, Response
@@ -209,16 +211,27 @@ def update_history(id_moneda):
     return {'message': 'history updated'}
 
 
-@app.route('/search/<keyword>', methods=['GET'])
-def search_keyword(keyword):
+@app.route('/search', methods=['POST'])
+def search_keyword():
+    keywords = request.json["keywords"]
+
     config = twint.Config()
-    config.Search = keyword
     config.Retweets = False
     config.Min_likes = 5000
+    config.Store_csv = True
+    config.Hide_output = False
 
-    config.Store_json = True
-    config.Output = keyword + ".json"
-    result = twint.run.Search(config)
+    for word in keywords:
+        config.Search = word
+        config.Output = word + ".csv"
+        twint.run.Search(config)
+
+        with open(config.Output, encoding="utf8") as csv_file:
+            file_data = pd.read_csv(csv_file)
+
+            data_json = json.loads(file_data.to_json(orient='records'))
+
+            mongo.db.tweets.insert(data_json)
 
     return {'message': 'OK'}
 
