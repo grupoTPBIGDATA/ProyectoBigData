@@ -2,9 +2,6 @@ from datetime import date, datetime, timezone
 
 import tweepy
 import twint
-import json
-import pandas as pd
-
 from bson import json_util
 from flask import Flask, request, Response
 from flask_pymongo import PyMongo, ObjectId
@@ -218,20 +215,15 @@ def search_keyword():
     config = twint.Config()
     config.Retweets = False
     config.Min_likes = 5000
-    config.Store_csv = True
     config.Hide_output = False
+    config.Store_object = True
 
     for word in keywords:
         config.Search = word
-        config.Output = word + ".csv"
         twint.run.Search(config)
+        tweets = twint.output.tweets_list
+        # TODO: procesar tweets y guardar en mongo
 
-        with open(config.Output, encoding="utf8") as csv_file:
-            file_data = pd.read_csv(csv_file)
-
-            data_json = json.loads(file_data.to_json(orient='records'))
-
-            mongo.db.tweets.insert(data_json)
 
     return {'message': 'OK'}
 
