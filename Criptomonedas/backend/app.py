@@ -223,17 +223,16 @@ def search_keyword():
         config.Search = word
         twint.run.Search(config)
         tweets = twint.output.tweets_list
-        # TODO: procesar tweets y guardar en mongo
-        lista_tweets.append(vars(Tweet(tw.id,tw.tweet,tw.hashtags,tw.cashtags,datetime.strptime(tw.datestamp + tw.timestamp +tw.timezone,'%Y-%m-%d%H:%M:%S%z'),tw.username,tw.name,tw.link)) for tw in tweets)
-    
-    response = json_util.dumps(lista_tweets)
-    return Response(response, mimetype='aplication/json')
-    #for tw in tweets:
-    #    print( tw.datestamp +''+ tw.timestamp +''+tw.timezone)
-    
-    #return Response(tweets, mimetype='aplication/json')
 
-    #return {'message': 'OK'}
+        tweets_clean = [vars(Tweet(x.id, x.tweet, x.hashtags, x.cashtags,
+                                   datetime.strptime(x.datestamp + x.timestamp + x.timezone, '%Y-%m-%d%H:%M:%S%z'),
+                                   x.username, x.name, x.link)) for x in tweets]
+
+        lista_tweets.extend(tweets_clean)
+
+    mongo.db.tweetsCripto.insert(lista_tweets)
+
+    return Response(f'{len(lista_tweets)} tweets insertados en db.tweetsCripto', mimetype='aplication/json')
 
 
 if __name__ == "__main__":

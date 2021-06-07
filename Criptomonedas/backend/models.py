@@ -8,14 +8,15 @@ class Precio:
     precio: float
     fecha: datetime
 
+
 @dataclass
 class Tweet:
-    id:str
+    id: str
     tweet: str
-    hashtag:any
-    cashtag:any
+    hashtag: any
+    cashtag: any
     fecha: datetime
     user: str
     name: str
-    link:str
+    link: str
     type = "tweet"
