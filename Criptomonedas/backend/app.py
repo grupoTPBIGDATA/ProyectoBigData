@@ -9,7 +9,7 @@ from pycoingecko import CoinGeckoAPI
 from pytwitterscraper import TwitterScraper
 
 from connectionChain import (cosumer_key, consumer_secret, access_token, access_token_secret)
-from models import Precio
+from models import Precio, Tweet
 
 cg = CoinGeckoAPI()
 app = Flask(__name__)
@@ -211,21 +211,29 @@ def update_history(id_moneda):
 @app.route('/search', methods=['POST'])
 def search_keyword():
     keywords = request.json["keywords"]
-
+    lista_tweets = []
     config = twint.Config()
     config.Retweets = False
     config.Min_likes = 5000
-    config.Hide_output = False
+    config.Hide_output = True
     config.Store_object = True
+    config.Format = "ID {id} | Name {name}"
 
     for word in keywords:
         config.Search = word
         twint.run.Search(config)
         tweets = twint.output.tweets_list
         # TODO: procesar tweets y guardar en mongo
+        lista_tweets.append(vars(Tweet(tw.id,tw.tweet,tw.hashtags,tw.cashtags,datetime.strptime(tw.datestamp + tw.timestamp +tw.timezone,'%Y-%m-%d%H:%M:%S%z'),tw.username,tw.name,tw.link)) for tw in tweets)
+    
+    response = json_util.dumps(lista_tweets)
+    return Response(response, mimetype='aplication/json')
+    #for tw in tweets:
+    #    print( tw.datestamp +''+ tw.timestamp +''+tw.timezone)
+    
+    #return Response(tweets, mimetype='aplication/json')
 
-
-    return {'message': 'OK'}
+    #return {'message': 'OK'}
 
 
 if __name__ == "__main__":
