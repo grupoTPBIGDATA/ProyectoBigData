@@ -7,6 +7,7 @@ from flask import Flask, request, Response
 from flask_pymongo import PyMongo, ObjectId
 from pycoingecko import CoinGeckoAPI
 from pytwitterscraper import TwitterScraper
+import pymongo
 
 from connectionChain import (cosumer_key, consumer_secret, access_token, access_token_secret)
 from models import Precio, Tweet
@@ -217,7 +218,7 @@ def search_keyword():
     config.Min_likes = 5000
     config.Hide_output = True
     config.Store_object = True
-    config.Format = "ID {id} | Name {name}"
+    #config.Format = "ID {id} | Name {name}"
 
     for word in keywords:
         config.Search = word
@@ -226,7 +227,7 @@ def search_keyword():
 
         tweets_clean = [vars(Tweet(x.id, x.tweet, x.hashtags, x.cashtags,
                                    datetime.strptime(x.datestamp + x.timestamp + x.timezone, '%Y-%m-%d%H:%M:%S%z'),
-                                   x.username, x.name, x.link)) for x in tweets]
+                                   x.username, x.name, x.link, word)) for x in tweets]
 
         lista_tweets.extend(tweets_clean)
 
