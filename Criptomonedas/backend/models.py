@@ -32,4 +32,7 @@ class Tweet:
     name: str
     link: str
     search: str
+    likes: str
+    retweets: str
+    replies: str
     type = "tweet"
