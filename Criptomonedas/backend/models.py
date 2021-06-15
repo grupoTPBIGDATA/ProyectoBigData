@@ -20,6 +20,13 @@ class Volume:
     volume: float
     fecha: datetime
 
+@dataclass
+class Variation:
+    id_criptomoneda: str
+    volume: float
+    fecha: datetime
+    type_variation:str
+    percentage_variation: float
 
 @dataclass
 class Tweet:

@@ -10,9 +10,10 @@ from pytwitterscraper import TwitterScraper
 import pymongo
 import csv
 import pandas as pd
+import time
 
 from connectionChain import (cosumer_key, consumer_secret, access_token, access_token_secret)
-from models import Precio, Tweet
+from models import Precio, Tweet,Variation
 
 cg = CoinGeckoAPI()
 app = Flask(__name__)
@@ -237,18 +238,86 @@ def search_keyword():
 
     return Response(f'{len(lista_tweets)} tweets insertados en db.tweetsCripto', mimetype='aplication/json')
 
+
 @app.route('/searchTweetCripto', methods=['GET'])
 def searchTweetCripto():
-    results = []
-    date = []
-    fecha1 = datetime
+
+    start = time.process_time()
+
+    pandas_results = []
+    
+    cryptocurrency_variation = []
+    
+    cryptocurrencies_above = 0
+
     custom_date_parser = lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z")
+
     reader = pd.read_csv('tweets_result.csv',encoding="utf8",parse_dates=['fecha'], date_parser=custom_date_parser)
-    #print(reader)
-    reader.info()
-    for row in reader:
-        #results.append(row)
-        print(row)
+    
+    for index, row in reader.iterrows():
+        pandas_results.append(row)
+
+    end = time.process_time()
+    print(f"Tiempo pandas {end - start}")
+
+    start = time.process_time()
+
+    results = []
+
+    with open('tweets_result.csv', encoding="utf8") as File:
+        reader = csv.DictReader(File)
+        for row in reader:
+            row.update({'fecha': datetime.strptime(row['fecha'], '%Y-%m-%dT%H:%M:%S.%f%z')})
+            results.append(row)
+
+        end = time.process_time()
+        print(f"Tiempo csv {end - start}")
+
+    for x in mongo.db.volumeHistory.find():
+        if(cryptocurrencies_above != 0):
+            variation = ((x['volume'] - cryptocurrencies_above)/cryptocurrencies_above)*100
+            if(variation >= 5): 
+                #x_variation = [vars(Variation(y['id_criptomoneda'],y['volume'],datetime.strptime(y['fecha'], '%Y-%m-%dT%H:%M:%S.%f%z'),'Mayor al 5%',variation)) for y in x]
+                x_variation = {
+                    'id_criptomoneda':x['id_criptomoneda'],
+                    'volume': x['volume'],
+                    'fecha': datetime.strftime(x['fecha'], '%Y-%m-%dT%H:%M:%S.%f%z'),
+                    'type_variation': 'mayor al 5 %',
+                    'type_code': 1,
+                    'percentage_variation': variation
+                }
+                cryptocurrency_variation.append(x_variation)
+            
+            if(-5 < variation < 5 ):
+                x_variation = {
+                    'id_criptomoneda':x['id_criptomoneda'],
+                    'volume': x['volume'],
+                    'fecha': datetime.strftime(x['fecha'], '%Y-%m-%dT%H:%M:%S.%f%z'),
+                    'type_variation': 'entre -5% y 5%',
+                    'type_code': 0,
+                    'percentage_variation': variation
+                }
+                cryptocurrency_variation.append(x_variation)
+
+            if(variation <=  -5):
+                #x_variation = [vars(Variation(y['id_criptomoneda'],y['volume'],datetime.strptime(y['fecha'], '%Y-%m-%dT%H:%M:%S.%f%z'),'Menor al 5%',variation)) for y in x]
+                x_variation = {
+                    'id_criptomoneda':x['id_criptomoneda'],
+                    'volume': x['volume'],
+                    'fecha': datetime.strftime(x['fecha'], '%Y-%m-%dT%H:%M:%S.%f%z'),
+                    'type_variation': 'menor al -5 %',
+                    'type_code': -1,
+                    'percentage_variation': variation
+                }
+                cryptocurrency_variation.append(x_variation)
+        cryptocurrencies_above = x['volume']
+    print(cryptocurrency_variation)
+    mongo.db.criptocurrencyVariation.insert(cryptocurrency_variation)
+    response = json_util.dumps(cryptocurrency_variation)
+    return Response(response, mimetype='aplication/json')
+        #fecha = datetime.strftime(x['fecha'], '%Y-%m-%dT%H:%M:%S.%f%z')
+        
+
     #for r in results:
     #    fecha1 = r['fecha']
     #    print(fecha1)
@@ -262,8 +331,8 @@ def searchTweetCripto():
         #    print(str(fecha1) + "X1 es mayor" +  str(fecha))
         #else:
         #    print(str(fecha1) + "X2 es mayor" +  str(fecha))
-    #return Response(json_util.dumps(date), mimetype='aplication/json')   
-    return {'message': 'history updated'}
+    #return Response(json_util.dumps(date), mimetype='aplication/json')
+    #return {'message': 'history updated'}
 
 if __name__ == "__main__":
     app.run(debug=True)
