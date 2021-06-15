@@ -8,6 +8,8 @@ from flask_pymongo import PyMongo, ObjectId
 from pycoingecko import CoinGeckoAPI
 from pytwitterscraper import TwitterScraper
 import pymongo
+import csv
+import pandas as pd
 
 from connectionChain import (cosumer_key, consumer_secret, access_token, access_token_secret)
 from models import Precio, Tweet
@@ -235,6 +237,33 @@ def search_keyword():
 
     return Response(f'{len(lista_tweets)} tweets insertados en db.tweetsCripto', mimetype='aplication/json')
 
+@app.route('/searchTweetCripto', methods=['GET'])
+def searchTweetCripto():
+    results = []
+    date = []
+    fecha1 = datetime
+    custom_date_parser = lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z")
+    reader = pd.read_csv('tweets_result.csv',encoding="utf8",parse_dates=['fecha'], date_parser=custom_date_parser)
+    #print(reader)
+    reader.info()
+    for row in reader:
+        #results.append(row)
+        print(row)
+    #for r in results:
+    #    fecha1 = r['fecha']
+    #    print(fecha1)
+    #for x in mongo.db.volumeHistory.find():
+    #    fecha = datetime.strftime(x['fecha'], '%Y-%m-%dT%H:%M:%S.%f%z')
+    #    date.append(fecha)
+
+
+    #print(fecha1.day)
+        #if(fecha1 > fecha):
+        #    print(str(fecha1) + "X1 es mayor" +  str(fecha))
+        #else:
+        #    print(str(fecha1) + "X2 es mayor" +  str(fecha))
+    #return Response(json_util.dumps(date), mimetype='aplication/json')   
+    return {'message': 'history updated'}
 
 if __name__ == "__main__":
     app.run(debug=True)
