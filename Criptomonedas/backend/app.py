@@ -241,7 +241,18 @@ def search_keyword():
 
 @app.route('/searchTweetCripto', methods=['GET'])
 def searchTweetCripto():
-
+    keywords1 = [
+        "bitcoin",
+        "BTC"
+    ]
+    keywords2 = [
+        "ethereum",
+        "ETH"
+    ]
+    keywords3 = [
+        "dogecoin",
+        "DOGE"
+    ]
     start = time.process_time()
 
     pandas_results = []
@@ -252,10 +263,13 @@ def searchTweetCripto():
 
     custom_date_parser = lambda x: datetime.strptime(x, "%Y-%m-%dT%H:%M:%S.%f%z")
 
+    tweet_cryptocurrency_variation = []
+
     reader = pd.read_csv('tweets_result.csv',encoding="utf8",parse_dates=['fecha'], date_parser=custom_date_parser)
     
     for index, row in reader.iterrows():
         pandas_results.append(row)
+        #print(row.fecha.day)
 
     end = time.process_time()
     print(f"Tiempo pandas {end - start}")
@@ -310,29 +324,83 @@ def searchTweetCripto():
                     'percentage_variation': variation
                 }
                 cryptocurrency_variation.append(x_variation)
+            for row in pandas_results:
+                f1 = date(x['fecha'].year,x['fecha'].month,x['fecha'].day)
+                f2 = date(row.fecha.year,row.fecha.month,row.fecha.day)
+                diferenciaFecha = f1 - f2
+                if( 0 < diferenciaFecha.days < 2):
+                    if(x['id_criptomoneda'] == 'bitcoin'):
+                        if any(keyword.upper() in row.tweet.upper() for keyword in keywords1):
+                            tweet_variaton = {
+                                'id_criptomoneda':x['id_criptomoneda'],
+                                'percentage_variation': variation,
+                                'type_code_variaton':x_variation['type_code'],
+                                'id_twwet': row._id,
+                                'fecha_tweet': row.fecha,
+                                'link_tweet': row.link,
+                                'userName_tweet': row.name,
+                                'user_tweet': row.user,
+                                'content_tweet': row.tweet,
+                                'hashtag_tweet': row.hashtag,
+                                'cashtag_tweet': row.cashtag
+                                }
+                    if(x['id_criptomoneda'] == 'dogecoin'):
+                        if any(keyword.upper() in row.tweet.upper() for keyword in keywords3):
+                            tweet_variaton = {
+                                'id_criptomoneda':x['id_criptomoneda'],
+                                'percentage_variation': variation,
+                                'type_code_variaton':x_variation['type_code'],
+                                'id_twwet': row._id,
+                                'fecha_tweet': row.fecha,
+                                'link_tweet': row.link,
+                                'userName_tweet': row.name,
+                                'user_tweet': row.user,
+                                'content_tweet': row.tweet,
+                                'hashtag_tweet': row.hashtag,
+                                'cashtag_tweet': row.cashtag
+                                }
+                    if(x['id_criptomoneda'] == 'ethereum'):
+                        if any(keyword.upper() in row.tweet.upper() for keyword in keywords2):
+                            tweet_variaton = {
+                                'id_criptomoneda':x['id_criptomoneda'],
+                                'percentage_variation': variation,
+                                'type_code_variaton':x_variation['type_code'],
+                                'id_twwet': row._id,
+                                'fecha_tweet': row.fecha,
+                                'link_tweet': row.link,
+                                'userName_tweet': row.name,
+                                'user_tweet': row.user,
+                                'content_tweet': row.tweet,
+                                'hashtag_tweet': row.hashtag,
+                                'cashtag_tweet': row.cashtag
+                                }
+                    tweet_cryptocurrency_variation.append(tweet_variaton)
+                #if(x['fecha'].month == row.fecha.month and x['fecha'].year == row.fecha.year):
+                    if((row.fecha.day <= x['fecha'].day - 2) and ((x['id_criptomoneda'] in row.hashtag) or (x['id_criptomoneda'] in row.cashtag) or (x['id_criptomoneda'] in row.tweet))):
+                        #and x['id_criptomoneda'] in row.hashtag or x['id_criptomoneda'] in row.cashtag
+                        tweet_variaton = {
+                            'id_criptomoneda':x['id_criptomoneda'],
+                            'percentage_variation': variation,
+                            'type_code_variaton':x_variation['type_code'],
+                            'id_twwet': row._id,
+                            'fecha_tweet': row.fecha,
+                            'link_tweet': row.link,
+                            'userName_tweet': row.name,
+                            'user_tweet': row.user,
+                            'content_tweet': row.tweet,
+                            'hashtag_tweet': row.hashtag,
+                            'cashtag_tweet': row.cashtag
+                        }
+                        tweet_cryptocurrency_variation.append(tweet_variaton)
+                #print(row)
+                #print(x['fecha'].day)
         cryptocurrencies_above = x['volume']
-    print(cryptocurrency_variation)
-    mongo.db.criptocurrencyVariation.insert(cryptocurrency_variation)
-    response = json_util.dumps(cryptocurrency_variation)
+    #print(cryptocurrency_variation)
+    #mongo.db.criptocurrencyVariation.insert(cryptocurrency_variation)
+    response = json_util.dumps(tweet_cryptocurrency_variation)
+    print(tweet_cryptocurrency_variation)
+    print(len(tweet_cryptocurrency_variation))
     return Response(response, mimetype='aplication/json')
-        #fecha = datetime.strftime(x['fecha'], '%Y-%m-%dT%H:%M:%S.%f%z')
-        
-
-    #for r in results:
-    #    fecha1 = r['fecha']
-    #    print(fecha1)
-    #for x in mongo.db.volumeHistory.find():
-    #    fecha = datetime.strftime(x['fecha'], '%Y-%m-%dT%H:%M:%S.%f%z')
-    #    date.append(fecha)
-
-
-    #print(fecha1.day)
-        #if(fecha1 > fecha):
-        #    print(str(fecha1) + "X1 es mayor" +  str(fecha))
-        #else:
-        #    print(str(fecha1) + "X2 es mayor" +  str(fecha))
-    #return Response(json_util.dumps(date), mimetype='aplication/json')
-    #return {'message': 'history updated'}
 
 if __name__ == "__main__":
     app.run(debug=True)
